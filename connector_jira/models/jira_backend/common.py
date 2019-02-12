@@ -25,6 +25,7 @@ from odoo.addons.component.core import Component
 
 _logger = logging.getLogger(__name__)
 
+JIRA_TIMEOUT = 30  # seconds
 IMPORT_DELTA = 70  # seconds
 
 
@@ -139,6 +140,11 @@ class JiraBackend(models.Model):
         string='Epic Link Field',
         help="The 'Epic Link' field on JIRA is a custom field. "
              "The name of the field is something like 'customfield_10002'. "
+    )
+    epic_name_field_name = fields.Char(
+        string='Epic Name Field',
+        help="The 'Epic Name' field on JIRA is a custom field. "
+             "The name of the field is something like 'customfield_10003'. "
     )
 
     odoo_webhook_base_url = fields.Char(
@@ -353,7 +359,8 @@ class JiraBackend(models.Model):
                 custom_ref = field.get('schema', {}).get('custom')
                 if custom_ref == 'com.pyxis.greenhopper.jira:gh-epic-link':
                     self.epic_link_field_name = field['id']
-                    break
+                elif custom_ref == 'com.pyxis.greenhopper.jira:gh-epic-label':
+                    self.epic_name_field_name = field['id']
 
     @api.multi
     def state_setup(self):
@@ -518,7 +525,7 @@ class JiraBackend(models.Model):
             'server': backend.uri,
             'verify': backend.verify_ssl,
         }
-        return JIRA(options=options, oauth=oauth)
+        return JIRA(options=options, oauth=oauth, timeout=JIRA_TIMEOUT)
 
     @api.model
     def _scheduler_import_project_task(self):
