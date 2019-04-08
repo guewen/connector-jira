@@ -1,2 +1,4 @@
-OCA/server-tools
-OCA/web
+queue
+connector
+server-env
+web
